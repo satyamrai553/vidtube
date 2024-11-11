@@ -19,4 +19,16 @@ app.use(express.urlencoded({
 
 app.use(express.static("public"))
 
+//import routes
+import helathCheckRouter from "./routes/healthCheck.routes.js"
+
+
+
+//routes
+
+app.use("/api/v1/healthCheck", helathCheckRouter)
+
+
+
+
 export {app};

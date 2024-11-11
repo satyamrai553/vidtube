@@ -1,6 +1,6 @@
 import mongoose, {Schema} from "mongoose";
 
-const playlistSchema = new Schema(
+const tweetSchema = new Schema(
     {
         
     },
@@ -11,4 +11,4 @@ const playlistSchema = new Schema(
 
 
 
-export const Playlist = mongoose.model("Playlist", playlistSchema);
+export const Tweet = mongoose.model("Tweet", tweetSchema);
