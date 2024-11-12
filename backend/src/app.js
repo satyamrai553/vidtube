@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser'
 
 
 
@@ -18,6 +19,10 @@ app.use(express.urlencoded({
 }))
 
 app.use(express.static("public"))
+app.use(cookieParser())
+
+
+
 
 //import routes
 import helathCheckRouter from "./routes/healthCheck.routes.js"
