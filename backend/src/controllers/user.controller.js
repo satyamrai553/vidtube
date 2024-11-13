@@ -1,7 +1,7 @@
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {ApiErrorResponse} from "../utils/ApiErrorResponse.js";
-import { User } from "../models/user.models.js";
+import { User } from "../middlewares/models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 
