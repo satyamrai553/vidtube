@@ -29,6 +29,10 @@ import helathCheckRouter from "./routes/healthCheck.routes.js"
 import userRouter from "./routes/user.routes.js"
 import { errorHandler } from './middlewares/error.middleware.js';
 
+app.use((req, res, next) => {
+    console.log("Middleware Debug - Method:", req.method, "Path:", req.path, "Body:", req.body);
+    next();
+});
 
 
 //routes
