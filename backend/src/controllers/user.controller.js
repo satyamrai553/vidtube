@@ -4,6 +4,7 @@ import {ApiErrorResponse} from "../utils/ApiErrorResponse.js";
 import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import  jwt  from "jsonwebtoken";
+import fs from 'fs'
 
 const generateAccessAndRefreshTokens = async(userId)=>{
     try {
@@ -22,21 +23,6 @@ const generateAccessAndRefreshTokens = async(userId)=>{
 }
 
 const registerUser = asyncHandler(async (req, res)=>{
-   const {fullname, email, username, password} = req.body;
-    console.log(email,password)
-    //validation
-    if([fullname, username, email, password].some((field)=> field?.trim() === "" )){
-        throw new ApiErrorResponse(400, "All fields are required")
-    }
-    //cheack if user already exist
-    const existedUser = await User.findOne({
-        $or: [{username}, {email}]
-    })
-
-    if(existedUser){
-        throw new ApiErrorResponse(409, "User with email or username already exists")
-
-    }
 
     const avatarLocalPath = req.files?.avatar[0]?.path
     let coverImageLocalPath;
@@ -49,13 +35,37 @@ const registerUser = asyncHandler(async (req, res)=>{
 
     }
 
+    
+
+
+
+   const {fullname, email, username, password} = req.body;
+   
+    //validation
+    if([fullname, username, email, password].some((field)=> field?.trim() === "" )){
+        fs.unlinkSync(avatarLocalPath)
+        fs.unlinkSync(coverImageLocalPath)
+        throw new ApiErrorResponse(400, "All fields are required")
+    }
+    //cheack if user already exist
+    const existedUser = await User.findOne({
+        $or: [{username}, {email}]
+    })
+
+    if(existedUser){
+        fs.unlinkSync(avatarLocalPath)
+        fs.unlinkSync(coverImageLocalPath)
+        throw new ApiErrorResponse(409, "User with email or username already exists")
+
+    }
+
+    
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
-
+    
     if(!avatar){
         throw new ApiErrorResponse(400, "Avatar file is required")
     }
-
 
    const user = await User.create({
         fullname,
@@ -157,11 +167,6 @@ const logoutUser = asyncHandler(async(req, res)=>{
 })
 
 
-const checkLink = asyncHandler(async(req, res)=>{
-    const {email} = req.body;
-
-    console.log(email);
-})
 
 
 const refreshAccessToken = asyncHandler(async(req,res)=>{
