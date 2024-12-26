@@ -321,6 +321,7 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
     if(!username?.trim()){
         throw new ApiErrorResponse(400, "username is missing")
     }
+    console.log(username)
     const channel = await User.aggregate([
         {
             $match:{
@@ -346,15 +347,15 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
         {
             $addFields: {
                 subscriberCount: {
-                    $size: "$subscribers"
+                    $size: { $ifNull: ["$subscribers", []] }
                 },
                 channelsSubscribedToCount: {
-                    $size: "$subscribedTo"
+                    $size: { $ifNull: ["$subscribedTo", []] }
                 },
                 
                     isSubscribed: {
                         $cond: {
-                            if: {$in: [req.users?._id, "$subscribers.subscriber"]},
+                            if: { $in: [req.user?._id, { $ifNull: ["$subscribers.subscriber", []] }] },
                             then: true,
                             else: false
                         }
@@ -376,9 +377,10 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
             }
         }
     ])
+    
 
     if(!channel?.length){
-        throw new ApiError(404, "channel does not exists")
+        throw new ApiErrorResponse(404, "channel does not exists")
     }
     return res.status(200).json(
       new ApiResponse(200, channel[0], "User channel fetched successfully")
