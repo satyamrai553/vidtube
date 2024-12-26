@@ -63,7 +63,7 @@ const registerUser = asyncHandler(async (req, res)=>{
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
     
-    if(!avatar){
+    if(!avatar.url){
         throw new ApiErrorResponse(400, "Avatar file is required")
     }
 
@@ -321,7 +321,7 @@ const updateUserCoverImage = asyncHandler(async(req, res)=>{
     if(!username?.trim()){
         throw new ApiErrorResponse(400, "username is missing")
     }
-    console.log(username)
+
     const channel = await User.aggregate([
         {
             $match:{
