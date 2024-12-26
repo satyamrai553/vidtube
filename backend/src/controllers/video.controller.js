@@ -7,13 +7,13 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import { ApiErrorResponse } from "../utils/ApiErrorResponse.js"
 import fs from 'fs'
+import { upload } from "../middlewares/multer.middleware.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
     //TODO: get all videos based on query, sort, pagination
     
-
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
@@ -67,12 +67,49 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: get video by id
+    if(!isValidObjectId(videoId)){
+        throw new ApiErrorResponse(400, "Not a valid Id")
+    }
+
+    const video = await Video.findById(videoId);
+
+    if(!video){
+        throw new ApiErrorResponse(400, "Video not found!")
+    }
+    return res.status(200).ApiResponse(200, video, "Video fetched successfully")
+
 
 })
 
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: update video details like title, description, thumbnail
+    if(!isValidObjectId(videoId)){
+        throw new ApiErrorResponse(400, "Not a valid Id")
+    }
+   const newThumbnailLocalPath = req.file?.path;
+   if(!newThumbnailLocalPath){
+    throw new ApiErrorResponse(400, "Thumbnail is required")
+   }
+   const {title, description} = req.body;
+   if(!title){
+     fs.unlinkSync(newThumbnailLocalPath);
+     throw new ApiErrorResponse(400, "Title is required")
+   }
+   const video = await Video.findById(videoId);
+    if (!video) {
+    throw new ApiError(404, "Video not found");
+  }
+
+  if (video.owner !== req.user._id) {
+    throw new ApiError(403, "You are not allowed to update this video");
+  }
+   const thumbnail =await upload(newThumbnailLocalPath);
+   if(!thumbnail){
+    throw new ApiErrorResponse(500, "Error while uploading the thumbnail")
+   }
+   const 
+
 
 })
 
