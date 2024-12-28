@@ -1,6 +1,6 @@
 import mongoose, {isValidObjectId} from "mongoose"
-import {User} from "../models/user.model.js"
-import { Subscription } from "../models/subscription.model.js"
+import {User} from "../models/user.models.js"
+import { Subscription } from "../models/subscription.models.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 import { ApiErrorResponse } from "../utils/ApiErrorResponse.js"
@@ -43,53 +43,52 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     const { channelId } = req.params;
 
-    // Validate the channel ID
     if (!isValidObjectId(channelId)) {
         throw new ApiErrorResponse(400, "Invalid channel ID");
     }
 
-    // Aggregate pipeline to fetch channel subscribers
-    const subscribers = await User.aggregate([
+    
+    const subscribersList = await Subscription.aggregate([
         {
-            $match: {
-                _id: new mongoose.Types.ObjectId(channelId),
-            },
+            $match:{
+                channel: new mongoose.Types.ObjectId(channelId)
+            }
         },
         {
-            $lookup: {
-                from: "subscriptions",
-                localField: "_id",
-                foreignField: "channel",
-                as: "subscriptions",
-            },
+            $lookup:{
+                from:"users",
+                localField:"subscriber",
+                foreignField:"_id",
+                as:"subscriber",
+                pipeline:[
+                    {
+                        $project:{
+                            username: 1,
+                            fullname: 1,
+                            avatar: 1,
+                        }
+                    }
+                ]
+            }
         },
         {
-            $unwind: {
-                path: "$subscriptions",
-                preserveNullAndEmptyArrays: true,
-            },
+            $addFields:{
+                subscriber: {
+                    $first: "$subscriber",
+                }
+            }
         },
         {
-            $lookup: {
-                from: "users",
-                localField: "subscriptions.subscriber",
-                foreignField: "_id",
-                as: "subscriberDetails",
-            },
-        },
-        {
-            $project: {
-                username: 1,
-                subscriberDetails: {
-                    username: 1,
-                },
-            },
-        },
-    ]);
-
-    if (!subscribers || subscribers.length === 0) {
-        throw new ApiErrorResponse(404, "No subscribers found for this channel");
+            $project:{
+                subscriber: 1,
+                createdAt: 1,
+            }
+        }
+    ])
+    if(!subscribersList){
+        throw new ApiErrorResponse(400, "Error while fetching the list")
     }
+     
 
     return res
         .status(200)
@@ -101,57 +100,48 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 const getSubscribedChannels = asyncHandler(async (req, res) => {
     const { subscriberId } = req.params;
 
-    // Validate subscriber ID
     if (!isValidObjectId(subscriberId)) {
         throw new ApiErrorResponse(400, "Invalid subscriber ID");
     }
-
-    // Aggregate pipeline
-    const channels = await User.aggregate([
+    const channelsList = await Subscription.aggregate([
         {
-            $match: {
-                _id: new mongoose.Types.ObjectId(subscriberId),
-            },
+            $match:{
+                subscriber: new mongoose.Types.ObjectId(subscriberId)
+            }
         },
         {
-            $lookup: {
-                from: "subscriptions",
-                localField: "_id",
-                foreignField: "subscriber",
-                as: "subscribedTo",
-            },
+            $lookup:{
+                from:"user",
+                localField:"channel",
+                foreignField:"_id",
+                as:"channel",
+                pipeline: [
+                    {
+                      $project: {
+                        fullName: 1,
+                        username: 1,
+                        avatar: 1,
+                      },
+                    },
+                  ],
+            }
         },
         {
-            $unwind: {
-                path: "$subscribedTo",
-                preserveNullAndEmptyArrays: true,
-            },
-        },
-        {
-            $lookup: {
-                from: "users",
-                localField: "subscribedTo.channel",
-                foreignField: "_id",
-                as: "channelDetails",
-            },
-        },
-        {
-            $unwind: {
-                path: "$channelDetails",
-                preserveNullAndEmptyArrays: true,
-            },
+            $addFields: {
+                channel: {
+                  $first: "$channel",
+                },
+            }
         },
         {
             $project: {
-                _id: 0, // Exclude subscriber ID
-                username: "$channelDetails.username",
-                avatar: "$channelDetails.avatar",
-            },
-        },
-    ]);
-
-    // Check if any channels were found
-    if (!channels || channels.length === 0) {
+                channel: 1,
+                createdAt: 1,
+              },
+        }
+    ])
+   
+    if (!channelsList || channelsList.length === 0) {
         throw new ApiErrorResponse(404, "No subscribed channels found for this subscriber");
     }
 

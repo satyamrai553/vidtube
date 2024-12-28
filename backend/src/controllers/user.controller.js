@@ -32,12 +32,9 @@ const registerUser = asyncHandler(async (req, res)=>{
 
     if(!avatarLocalPath){
         throw new ApiErrorResponse(400, "Avatar file is missing")
-
     }
 
     
-
-
 
    const {fullname, email, username, password} = req.body;
    
