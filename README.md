@@ -7,7 +7,7 @@ Here's a concise section for starting your Node.js-based VidTube project:
 1. **Clone the Repository**  
    Clone the project from your GitHub repository:
    ```bash
-   git clone https://github.com/yourusername/vidtube.git
+   git clone https://github.com/satyamrai553/vidtube.git
    cd vidtube
    ```
 
